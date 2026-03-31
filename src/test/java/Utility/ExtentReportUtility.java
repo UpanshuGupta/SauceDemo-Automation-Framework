@@ -30,8 +30,8 @@ public class ExtentReportUtility implements ITestListener {
     }
 
     public void onTestStart(ITestResult result) {
-        String username = result.getParameters()[0].toString();
-        test = extent.createTest("Login Test: " + username);
+        String tName = (result.getParameters().length > 0) ? result.getParameters()[0].toString() : result.getName();
+        test = extent.createTest(tName);
     }
 
     public void onTestSuccess(ITestResult result) {
@@ -39,32 +39,34 @@ public class ExtentReportUtility implements ITestListener {
     }
 
     public void onTestFailure(ITestResult result) {
-        test.log(Status.FAIL, "Test Failed: " + result.getThrowable().getMessage());
-        
-        String username = result.getParameters()[0].toString();
-        
-        String imgPath = new baseClass().captureScreen(username);
+        test.log(Status.FAIL, "Test Failed");
+        test.log(Status.FAIL, result.getThrowable().getMessage());
         
         try {
+            String tName = (result.getParameters().length > 0) ? result.getParameters()[0].toString() : result.getName();
+            String imgPath = new baseClass().captureScreen(tName);
             test.addScreenCaptureFromPath(imgPath);
         } catch (Exception e) {
-            System.out.println("Image attachment failed: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
+    public void onTestSkipped(ITestResult result) {
+        test.log(Status.SKIP, "Test Skipped");
+    }
+
     public void onFinish(ITestContext context) {
-        extent.flush(); 
+        if(extent != null) {
+            extent.flush(); 
+        }
         
-       
         File reportFile = new File(path);
         try {
-            if (Desktop.isDesktopSupported()) {
+            if (Desktop.isDesktopSupported() && reportFile.exists()) {
                 Desktop.getDesktop().browse(reportFile.toURI());
-            } else {
-                System.out.println("Desktop is not supported, please open report manually at: " + path);
             }
         } catch (IOException e) {
-            System.out.println("Auto-open failed: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

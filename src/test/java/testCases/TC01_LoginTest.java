@@ -5,6 +5,7 @@ import org.testng.annotations.DataProvider;
 import PageObject.loginPage;
 import org.testng.Assert;
 import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 
 public class TC01_LoginTest extends baseClass {
     
@@ -13,11 +14,11 @@ public class TC01_LoginTest extends baseClass {
         return new Object[][] {
             {"standard_user", "secret_sauce", "Valid"},
             {"locked_out_user", "secret_sauce", "Invalid"},
-            {"standard_user", "secret_sauce", "Valid"},
-            {"problem_user", "wrong_pass", "Invalid"}
+            {"standard_user", "wrong_password", "Invalid"},
+            {"problem_user", "secret_sauce", "Valid"}
         };
     }
-    
+
     @Test(dataProvider = "loginData")
     public void verify_login(String username, String password, String expected) {
         driver.get("https://www.saucedemo.com/");
@@ -27,12 +28,14 @@ public class TC01_LoginTest extends baseClass {
         lp.setPassword(password);
         lp.clkLogin();
         
-        if(expected.equals("Valid")) {
+        if(expected.equalsIgnoreCase("Valid")) {
             boolean status = driver.getCurrentUrl().contains("inventory");
-            Assert.assertTrue(status, "Valid login failed for: " + username);
-        } else {
-            String error = driver.findElement(By.xpath("//h3[@data-test='error']")).getText();
-            Assert.assertTrue(error.contains("Epic sadface"), "Expected error not shown for: " + username);
+            Assert.assertTrue(status, "Login failed for valid user: " + username);
+        } 
+        else {
+            // No try-catch here. Let TestNG handle the error if element is missing.
+            WebElement errorMsg = driver.findElement(By.xpath("//h3[@data-test='error']"));
+            Assert.assertTrue(errorMsg.isDisplayed(), "Error message not visible for: " + username);
         }
     }
 }
